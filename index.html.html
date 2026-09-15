@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MRD Kitchen Inventory & Expiry Tracking</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --info: #3b82f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 10px;
+        }
+
+        @media (min-width: 768px) {
+            body { padding: 20px; }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: var(--card-bg);
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        @media (min-width: 768px) {
+            header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                padding: 20px 30px;
+            }
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 20px;
+            color: var(--primary);
+        }
+
+        @media (min-width: 768px) {
+            header h1 { font-size: 24px; }
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .controls {
+                flex-direction: row;
+                align-items: center;
+                width: auto;
+                gap: 15px;
+            }
+        }
+
+        input[type="text"] {
+            padding: 10px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            width: 100%;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        @media (min-width: 768px) {
+            input[type="text"] { width: 250px; }
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+            text-align: center;
+        }
+
+        .btn:hover { background-color: var(--primary-hover); }
+
+        .btn-danger {
+            background-color: var(--danger);
+            padding: 6px 12px;
+            font-size: 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        .btn-danger:hover { background-color: #dc2626; }
+
+        .btn-check {
+            background-color: var(--info);
+            padding: 6px 12px;
+            font-size: 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        .btn-check:hover { background-color: #2563eb; }
+
+        .btn-update {
+            background-color: var(--success);
+            padding: 6px 12px;
+            font-size: 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        .btn-update:hover { background-color: #059669; }
+
+        /* Notifications Area */
+        #notification-area { margin-bottom: 20px; }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            font-size: 13px;
+        }
+        .alert.danger { background-color: #fef2f2; color: #991b1b; border-left: 5px solid var(--danger); }
+        .alert.warning { background-color: #fffbeb; color: #92400e; border-left: 5px solid var(--warning); }
+        .alert.info { background-color: #eff6ff; color: #1e3a8a; border-left: 5px solid var(--info); }
+
+        /* Table Styling */
+        .table-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            min-width: 800px; 
+        }
+
+        th, td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 13px;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        tr:hover { background-color: #f8fafc; }
+
+        input[type="date"], input[type="number"] {
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 13px;
+            background: #fff;
+        }
+
+        .expiry-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        .badge-ok { background-color: #d1fae5; color: #065f46; }
+        .badge-warn { background-color: #fef3c7; color: #b45309; }
+        .badge-danger { background-color: #fee2e2; color: #b91c1c; }
+
+        .rm-code {
+            font-family: monospace;
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .action-cell {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* Modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .modal-content h3 { margin-top: 0; color: var(--primary); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 13px; }
+        .form-group input { width: 100%; box-sizing: border-box; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>MRD Inventory & Expiry Hub</h1>
+        <div class="controls">
+            <input type="text" id="search-input" placeholder="Search item or RM code..." onkeyup="filterTable()">
+            <button class="btn" onclick="openModal()">+ Add New Item</button>
+            <span id="item-count" style="font-weight: 600; color: var(--text-muted); font-size: 13px; white-space: nowrap;">Loading...</span>
+        </div>
+    </header>
+
+    <!-- Expiry & 3-Day Alert Notifications Container -->
+    <div id="notification-area"></div>
+
+    <div class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>SL</th>
+                    <th>RM Code</th>
+                    <th>Product Name</th>
+                    <th>Action Date</th>
+                    <th>Shelf Life (Days)</th>
+                    <th>Expiry Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="inventory-body">
+                <!-- Rows dynamically injected via JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Item Modal -->
+<div id="addModal" class="modal">
+    <div class="modal-content">
+        <h3>Add Custom Inventory Item</h3>
+        <div class="form-group">
+            <label>RM Code</label>
+            <input type="text" id="new-rm" placeholder="e.g. 009999">
+        </div>
+        <div class="form-group">
+            <label>Product Name *</label>
+            <input type="text" id="new-name" placeholder="Item descriptive title">
+        </div>
+        <div class="modal-actions">
+            <button class="btn" style="background-color: #cbd5e1; color: #334155;" onclick="closeModal()">Cancel</button>
+            <button class="btn" onclick="addNewItem()">Save Item</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+    import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyC1jQBLuWzKUjxw5zciErZZAgaiagYvSow",
+        authDomain: "mrd-update.firebaseapp.com",
+        databaseURL: "https://mrd-update-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "mrd-update",
+        storageBucket: "mrd-update.firebasestorage.app",
+        messagingSenderId: "349091116061",
+        appId: "1:349091116061:web:878058a65e4f6d4ec242f4",
+        measurementId: "G-W62DB9TM7Q"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getDatabase(app);
+
+    const catalogRef = ref(db, 'mrd/catalog');
+    const inventoryRef = ref(db, 'mrd/inventory');
+
+    let productsData = [];
+    let inventoryState = {};
+
+    const tbody = document.getElementById('inventory-body');
+    const notificationArea = document.getElementById('notification-area');
+    const itemCount = document.getElementById('item-count');
+
+    // ==========================================
+    // THE FULL DATABASE OF ITEMS (No UOM)
+    // ==========================================
+    const defaultProductsData = [
+        { sl: 1, rm: "000135", name: "GNS Cream of Mushroom Soup" },
+        { sl: 2, rm: "002223", name: "Yoghurt" },
+        { sl: 3, rm: "001001", name: "Whole Milk" },
+        { sl: 4, rm: "001002", name: "Skimmed Milk" },
+        { sl: 5, rm: "001003", name: "Whipping Cream" },
+        { sl: 6, rm: "001004", name: "Cooking Cream" },
+        { sl: 7, rm: "001005", name: "Unsalted Butter" },
+        { sl: 8, rm: "001006", name: "Salted Butter" },
+        { sl: 9, rm: "001007", name: "Cheddar Cheese" },
+        { sl: 10, rm: "001008", name: "Mozzarella Cheese" },
+        { sl: 11, rm: "001009", name: "Parmesan Cheese" },
+        { sl: 12, rm: "001010", name: "Cream Cheese" },
+        { sl: 13, rm: "002001", name: "Chicken Breast (Boneless)" },
+        { sl: 14, rm: "002002", name: "Chicken Thigh" },
+        { sl: 15, rm: "002003", name: "Chicken Wings" },
+        { sl: 16, rm: "002004", name: "Beef Striploin" },
+        { sl: 17, rm: "002005", name: "Beef Tenderloin" },
+        { sl: 18, rm: "002006", name: "Ground Beef" },
+        { sl: 19, rm: "002007", name: "Lamb Chops" },
+        { sl: 20, rm: "002008", name: "Bacon Strips" },
+        { sl: 21, rm: "003001", name: "White Onion" },
+        { sl: 22, rm: "003002", name: "Red Onion" },
+        { sl: 23, rm: "003003", name: "Garlic (Peeled)" },
+        { sl: 24, rm: "003004", name: "Ginger (Fresh)" },
+        { sl: 25, rm: "003005", name: "Carrots" },
+        { sl: 26, rm: "003006", name: "Potatoes (Russet)" },
+        { sl: 27, rm: "003007", name: "Tomatoes (Plum)" },
+        { sl: 28, rm: "003008", name: "Cucumbers" },
+        { sl: 29, rm: "003009", name: "Bell Peppers (Red)" },
+        { sl: 30, rm: "003010", name: "Bell Peppers (Green)" },
+        { sl: 31, rm: "003011", name: "Lettuce (Romaine)" },
+        { sl: 32, rm: "003012", name: "Lettuce (Iceberg)" },
+        { sl: 33, rm: "003013", name: "Spinach (Fresh)" },
+        { sl: 34, rm: "003014", name: "Mushrooms (Button)" },
+        { sl: 35, rm: "004001", name: "All-Purpose Flour" },
+        { sl: 36, rm: "004002", name: "Bread Flour" },
+        { sl: 37, rm: "004003", name: "White Sugar" },
+        { sl: 38, rm: "004004", name: "Brown Sugar" },
+        { sl: 39, rm: "004005", name: "Table Salt" },
+        { sl: 40, rm: "004006", name: "Sea Salt (Coarse)" },
+        { sl: 41, rm: "004007", name: "Black Pepper (Whole)" },
+        { sl: 42, rm: "004008", name: "White Pepper (Powder)" },
+        { sl: 43, rm: "004009", name: "Olive Oil (Extra Virgin)" },
+        { sl: 44, rm: "004010", name: "Vegetable Oil" },
+        { sl: 45, rm: "005001", name: "Tomato Ketchup" },
+        { sl: 46, rm: "005002", name: "Mayonnaise" },
+        { sl: 47, rm: "005003", name: "Mustard (Yellow)" },
+        { sl: 48, rm: "005004", name: "Mustard (Dijon)" },
+        { sl: 49, rm: "005005", name: "Soy Sauce" },
+        { sl: 50, rm: "005006", name: "Oyster Sauce" },
+        { sl: 51, rm: "005007", name: "Balsamic Vinegar" },
+        { sl: 52, rm: "005008", name: "White Vinegar" }
+    ];
+
+    onValue(catalogRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            productsData = Array.isArray(data) ? data.filter(Boolean) : Object.values(data);
+        } else {
+            productsData = defaultProductsData;
+            set(catalogRef, productsData);
+        }
+        renderTable();
+    });
+
+    onValue(inventoryRef, (snapshot) => {
+        if (snapshot.exists()) {
+            inventoryState = snapshot.val();
+        } else {
+            inventoryState = {};
+        }
+        renderTable();
+    });
+
+    window.saveInputToFirebase = function(sl) {
+        const saved = inventoryState[sl] || {};
+        const dateVal = document.getElementById(`date-${sl}`).value;
+        const lifeVal = document.getElementById(`life-${sl}`).value;
+        
+        let expiryDate = calculateExpiry(dateVal, lifeVal);
+        
+        let lastCheckedVal = saved.lastChecked || dateVal;
+        if (saved.date !== dateVal) {
+            lastCheckedVal = dateVal; // If date changes, reset the 3-day timer automatically
+        }
+        
+        const itemRef = ref(db, 'mrd/inventory/' + sl);
+        set(itemRef, {
+            date: dateVal,
+            life: lifeVal,
+            expiry: expiryDate ? formatDate(expiryDate) : null,
+            lastChecked: lastCheckedVal
+        });
+    };
+
+    // Auto-update action date to today
+    window.updateDate = function(sl) {
+        const todayStr = formatDate(new Date());
+        const dateInput = document.getElementById(`date-${sl}`);
+        if(dateInput) {
+            dateInput.value = todayStr;
+        }
+        saveInputToFirebase(sl);
+    };
+
+    // Acknowledge the item is still being used to reset the 3-day notification
+    window.markAsChecked = function(sl) {
+        const saved = inventoryState[sl];
+        if (!saved) return;
+        const itemRef = ref(db, 'mrd/inventory/' + sl);
+        
+        set(itemRef, {
+            ...saved,
+            lastChecked: formatDate(new Date())
+        });
+    };
+
+    window.addNewItem = function() {
+        const rm = document.getElementById('new-rm').value.trim();
+        const name = document.getElementById('new-name').value.trim();
+
+        if (!name) { alert("Product Name is required!"); return; }
+
+        const newSl = productsData.length > 0 ? Math.max(...productsData.map(p => p.sl)) + 1 : 1;
+        productsData.push({ sl: newSl, rm: rm || 'N/A', name: name });
+        set(catalogRef, productsData);
+        window.closeModal();
+    };
+
+    window.removeItem = function(sl) {
+        if (confirm("Are you sure you want to remove this item?")) {
+            productsData = productsData.filter(item => item.sl !== sl);
+            set(catalogRef, productsData);
+            const itemRef = ref(db, 'mrd/inventory/' + sl);
+            remove(itemRef);
+        }
+    };
+
+    window.openModal = function() { document.getElementById('addModal').style.display = 'flex'; }
+    window.closeModal = function() {
+        document.getElementById('addModal').style.display = 'none';
+        document.getElementById('new-rm').value = '';
+        document.getElementById('new-name').value = '';
+    }
+
+    window.filterTable = function() {
+        const query = document.getElementById('search-input').value.toLowerCase();
+        productsData.forEach(item => {
+            const row = document.getElementById(`row-${item.sl}`);
+            if(row) {
+                const matchName = item.name.toLowerCase().includes(query);
+                const matchRm = item.rm.toLowerCase().includes(query);
+                row.style.display = (matchName || matchRm) ? '' : 'none';
+            }
+        });
+    }
+
+    function calculateExpiry(actionDateStr, days) {
+        if (!actionDateStr || !days || isNaN(days)) return null;
+        const result = new Date(actionDateStr);
+        result.setDate(result.getDate() + parseInt(days));
+        return result;
+    }
+
+    function formatDate(date) {
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function getBadgeStatus(expiryDate) {
+        if (!expiryDate) return { text: 'N/A', class: '', diffDays: null };
+        const today = new Date(); today.setHours(0,0,0,0);
+        const target = new Date(expiryDate); target.setHours(0,0,0,0);
+        const diffDays = Math.round((target - today) / (1000 * 60 * 60 * 24));
+        const formatted = formatDate(target);
+
+        if (diffDays < 0) return { text: `${formatted} (Expired)`, class: 'badge-danger', diffDays };
+        if (diffDays === 0) return { text: `${formatted} (Expires Today)`, class: 'badge-danger', diffDays };
+        if (diffDays === 1) return { text: `${formatted} (1 Day Left)`, class: 'badge-warn', diffDays };
+        return { text: formatted, class: 'badge-ok', diffDays };
+    }
+
+    function renderTable() {
+        tbody.innerHTML = '';
+        const today = new Date(); today.setHours(0,0,0,0);
+
+        productsData.forEach((item, index) => {
+            const saved = inventoryState[item.sl] || { date: '', life: '', expiry: null, lastChecked: null };
+            let expiryDate = calculateExpiry(saved.date, saved.life);
+            let status = getBadgeStatus(expiryDate);
+
+            // Calculate 3-day inactivity/stale logic
+            let staleDiff = 0;
+            const trackDate = saved.lastChecked || saved.date;
+            if (trackDate) {
+                const checkedDate = new Date(trackDate);
+                checkedDate.setHours(0,0,0,0);
+                staleDiff = Math.floor((today - checkedDate) / (1000 * 60 * 60 * 24));
+            }
+
+            // Only show the check button if it's been 3 days and item hasn't expired yet
+            let checkButton = '';
+            if (staleDiff >= 3 && (status.diffDays === null || status.diffDays > 0)) {
+                checkButton = `<button class="btn btn-check" onclick="markAsChecked(${item.sl})">✔ Still Using</button>`;
+            }
+
+            const tr = document.createElement('tr');
+            tr.id = `row-${item.sl}`;
+            tr.innerHTML = `
+                <!-- Dynamically display the current row index + 1, so numbering stays sequential -->
+                <td><strong>${index + 1}</strong></td>
+                <td><span class="rm-code">${item.rm}</span></td>
+                <td><strong>${item.name}</strong></td>
+                <td><input type="date" id="date-${item.sl}" value="${saved.date || ''}" onchange="saveInputToFirebase(${item.sl})"></td>
+                <td><input type="number" id="life-${item.sl}" min="1" placeholder="e.g. 5" value="${saved.life || ''}" oninput="saveInputToFirebase(${item.sl})"></td>
+                <td><span id="badge-${item.sl}" class="expiry-badge ${status.class}">${status.text}</span></td>
+                <td class="action-cell">
+                    <button class="btn btn-update" onclick="updateDate(${item.sl})">Update</button>
+                    ${checkButton}
+                    <button class="btn btn-danger" onclick="removeItem(${item.sl})">Delete</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        itemCount.textContent = `Total Items: ${productsData.length}`;
+        checkNotifications();
+    }
+
+    function checkNotifications() {
+        notificationArea.innerHTML = '';
+        const today = new Date(); today.setHours(0,0,0,0);
+        let lastDayItems = []; let reminderItems = []; let staleItems = [];
+
+        productsData.forEach(item => {
+            const saved = inventoryState[item.sl];
+            if (saved && saved.date && saved.life && saved.expiry) {
+                const exp = new Date(saved.expiry); exp.setHours(0,0,0,0);
+                const diffDaysToExpiry = Math.round((exp - today) / (1000 * 60 * 60 * 24));
+                
+                if (diffDaysToExpiry <= 0) lastDayItems.push(item.name);
+                else if (diffDaysToExpiry === 1) reminderItems.push(item.name);
+
+                // Check 3 days without update (only if not expired yet)
+                const trackDate = saved.lastChecked || saved.date;
+                if (trackDate && diffDaysToExpiry > 0) {
+                    const checkedDate = new Date(trackDate);
+                    checkedDate.setHours(0,0,0,0);
+                    const staleDiff = Math.floor((today - checkedDate) / (1000 * 60 * 60 * 24));
+                    if (staleDiff >= 3) {
+                        staleItems.push(item.name);
+                    }
+                }
+            }
+        });
+
+        if (lastDayItems.length > 0) {
+            const el = document.createElement('div'); el.className = 'alert danger';
+            el.innerHTML = `⚠️ <strong>LAST DAY / EXPIRED:</strong> <span>${lastDayItems.join(', ')}</span>`;
+            notificationArea.appendChild(el);
+        }
+        if (reminderItems.length > 0) {
+            const el = document.createElement('div'); el.className = 'alert warning';
+            el.innerHTML = `⏳ <strong>1-DAY REMINDER:</strong> <span>${reminderItems.join(', ')}</span>`;
+            notificationArea.appendChild(el);
+        }
+        if (staleItems.length > 0) {
+            const el = document.createElement('div'); el.className = 'alert info';
+            el.innerHTML = `🔄 <strong>3-DAY CHECK NEEDED:</strong> <span>${staleItems.join(', ')}</span> - <em style="font-size: 11px;">Press "✔ Still Using" in the action column if product is not finished.</em>`;
+            notificationArea.appendChild(el);
+        }
+    }
+</script>
+
+</body>
+</html>
