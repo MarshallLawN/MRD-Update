@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MRD Kitchen Inventory & Expiry Tracking</title>
+    <title>Greens & Seeds - MRD System</title>
     <style>
         :root {
             --primary: #4f46e5;
             --primary-hover: #4338ca;
+            --brand-green: #68b631;
             --bg-color: #f8fafc;
             --card-bg: #ffffff;
             --text-main: #1e293b;
@@ -56,14 +57,38 @@
             }
         }
 
-        header h1 {
-            margin: 0;
-            font-size: 20px;
-            color: var(--primary);
+        /* Brand Styling */
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        @media (min-width: 768px) {
-            header h1 { font-size: 24px; }
+        .brand-logo {
+            height: 48px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-text h1 {
+            margin: 0;
+            font-size: 22px;
+            color: var(--brand-green);
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .brand-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
         }
 
         .controls {
@@ -260,7 +285,14 @@
 
 <div class="container">
     <header>
-        <h1>MRD Inventory & Expiry Hub</h1>
+        <div class="brand-container">
+            <!-- Replace logo.jpg with your image file path -->
+            <img src="logo.jpg" alt="Greens & Seeds Logo" class="brand-logo">
+            <div class="brand-text">
+                <h1>Greens & Seeds</h1>
+                <span class="brand-subtitle">MRD System</span>
+            </div>
+        </div>
         <div class="controls">
             <input type="text" id="search-input" placeholder="Search item or RM code..." onkeyup="filterTable()">
             <button class="btn" onclick="openModal()">+ Add New Item</button>
@@ -338,8 +370,8 @@
     const notificationArea = document.getElementById('notification-area');
     const itemCount = document.getElementById('item-count');
 
-    // Sample default database trimmed for brevity (Use your full one here)
     const defaultProductsData = [
+        [
         { sl: 1, rm: "000135", name: "GNS Cream of Mushroom Soup" },
         { sl: 2, rm: "002223", name: "Yoghurt ick" },
         { sl: 3, rm: "002210", name: "Mushroom Soup ICK" },
@@ -500,6 +532,7 @@
         { sl: 158, rm: "002353", name: "Jerk Spiced" },
         { sl: 159, rm: "003427", name: "Hand Sanitiser" },
         { sl: 160, rm: "003350", name: "Foil Paper" }
+]
     ];
 
     onValue(catalogRef, (snapshot) => {
@@ -543,7 +576,6 @@
         });
     };
 
-    // Updating logic modified to automatically inject '1' if Shelf Life is empty
     window.updateDate = function(sl) {
         const todayStr = formatDate(new Date());
         const dateInput = document.getElementById(`date-${sl}`);
@@ -551,7 +583,6 @@
         
         if (dateInput) dateInput.value = todayStr;
         
-        // Auto set to EOD (1) if they just press Update and shelf life is empty/0
         if (lifeInput && (!lifeInput.value || lifeInput.value === "0")) {
             lifeInput.value = 1;
         }
@@ -614,12 +645,9 @@
         });
     }
 
-    // Updated Expiry logic: Action Date now counts as Day 1.
-    // e.g. Today + 3 Days Shelf Life = Expires in 2 days from today.
     function calculateExpiry(actionDateStr, days) {
         if (!actionDateStr || !days || isNaN(days)) return null;
         const result = new Date(actionDateStr);
-        // Subtract 1 so the action date counts as a day
         result.setDate(result.getDate() + (parseInt(days) - 1));
         return result;
     }
@@ -641,9 +669,8 @@
         if (diffDays < 0) return { text: `${formatted} (Expired)`, class: 'badge-danger', diffDays };
         
         if (diffDays === 0) {
-            // Because action date counts as Day 1, an item with shelf life 1 expires today
             if (parseInt(life) === 1) {
-                return { text: `EOD`, class: 'badge-info', diffDays }; // Blue color, EOD text
+                return { text: `EOD`, class: 'badge-info', diffDays };
             }
             return { text: `${formatted} (Expires Today)`, class: 'badge-danger', diffDays };
         }
@@ -709,10 +736,8 @@
                 const diffDaysToExpiry = Math.round((exp - today) / (1000 * 60 * 60 * 24));
                 
                 if (diffDaysToExpiry < 0) {
-                    // Always alert if item is genuinely expired (yesterday or older)
                     lastDayItems.push(item.name);
                 } else if (diffDaysToExpiry === 0) {
-                    // Alert if expires today EXCEPT if it's an EOD item (Shelf Life = 1)
                     if (parseInt(saved.life) !== 1) {
                         lastDayItems.push(item.name);
                     }
